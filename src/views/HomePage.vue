@@ -246,11 +246,6 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 
-// Define component name
-defineOptions({
-  name: 'HomeView'
-})
-
 // Reactive data
 const activeView = ref('dashboard')
 const searchQuery = ref('')
