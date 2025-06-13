@@ -1,18 +1,17 @@
 const { defineConfig } = require('@vue/cli-service')
-const VueMacros = require('unplugin-vue-macros/webpack')
 
 module.exports = defineConfig({
   transpileDependencies: true,
   devServer: {
-    port: 5173
-  },
-  configureWebpack: {
-    plugins: [
-      VueMacros({
-        plugins: {
-          vue: require('@vitejs/plugin-vue'),
-        },
-      }),
-    ],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
+      },
+      '/cable': {
+        target: 'ws://localhost:3000',
+        ws: true
+      }
+    }
   }
 })

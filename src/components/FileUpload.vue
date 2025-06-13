@@ -47,6 +47,7 @@
 <script setup>
 import { ref } from 'vue';
 import { defineEmits } from 'vue';
+import api from '@/config/api';
 
 const emit = defineEmits(['data-processed']);
 
@@ -63,31 +64,26 @@ const handleFileUpload = (event) => {
 
 const processCSV = async () => {
   if (!csvFile.value) return;
-  
+
+  const formData = new FormData();
+  formData.append('file', csvFile.value);
+
   try {
-    const text = await csvFile.value.text();
-    const rows = text.split('\n');
-    
-    // Assuming CSV format: id,name,math,physics,chemistry
-    const parsedStudents = rows
-      .filter(row => row.trim())
-      .map(row => {
-        const [id, name, math, physics, chemistry] = row.split(',');
-        return {
-          id: id.trim(),
-          name: name.trim(),
-          math: parseFloat(math),
-          physics: parseFloat(physics),
-          chemistry: parseFloat(chemistry)
-        };
-      })
-      .filter(student => !isNaN(student.math) && !isNaN(student.physics) && !isNaN(student.chemistry));
-    
-    emit('data-processed', parsedStudents);
-    alert(`Đã xử lý thành công ${parsedStudents.length} bản ghi`);
+    const response = await api.post('/api/v1/students/import_csv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    const result = response.data;
+    if (response.status === 200) {
+      alert(result.message || 'Import thành công!');
+      emit('data-processed', result);
+    } else {
+      alert(result.error || 'Import thất bại!');
+    }
   } catch (error) {
-    console.error('Error processing CSV:', error);
-    alert('Có lỗi xảy ra khi xử lý file CSV');
+    console.error('Error uploading CSV:', error);
+    alert('Có lỗi xảy ra khi upload file CSV');
   }
 };
 </script> 
