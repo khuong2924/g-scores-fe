@@ -244,225 +244,110 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import api from '@/config/api'
 
-// Reactive data
 const activeView = ref('dashboard')
 const searchQuery = ref('')
 const searchResult = ref(null)
 const searchAttempted = ref(false)
 const uploadStatus = ref(null)
 
-// Mock data for students
-const students = reactive([
-  {
-    id: 1,
-    registrationNumber: '01001001',
-    name: 'Nguyễn Văn An',
-    birthDate: '2005-03-15',
-    math: 9.5,
-    physics: 8.75,
-    chemistry: 9.25,
-    totalScore: 27.5
-  },
-  {
-    id: 2,
-    registrationNumber: '01001002',
-    name: 'Trần Thị Bình',
-    birthDate: '2005-07-22',
-    math: 8.5,
-    physics: 9.0,
-    chemistry: 8.25,
-    totalScore: 25.75
-  },
-  {
-    id: 3,
-    registrationNumber: '01001003',
-    name: 'Lê Văn Cường',
-    birthDate: '2005-01-10',
-    math: 9.0,
-    physics: 8.5,
-    chemistry: 9.0,
-    totalScore: 26.5
-  },
-  {
-    id: 4,
-    registrationNumber: '01001004',
-    name: 'Phạm Thị Dung',
-    birthDate: '2005-11-05',
-    math: 7.5,
-    physics: 8.0,
-    chemistry: 7.75,
-    totalScore: 23.25
-  },
-  {
-    id: 5,
-    registrationNumber: '01001005',
-    name: 'Hoàng Văn Em',
-    birthDate: '2005-09-18',
-    math: 8.75,
-    physics: 8.25,
-    chemistry: 8.5,
-    totalScore: 25.5
-  },
-  {
-    id: 6,
-    registrationNumber: '01001006',
-    name: 'Vũ Thị Phương',
-    birthDate: '2005-04-30',
-    math: 6.5,
-    physics: 7.0,
-    chemistry: 6.75,
-    totalScore: 20.25
-  },
-  {
-    id: 7,
-    registrationNumber: '01001007',
-    name: 'Đỗ Văn Giang',
-    birthDate: '2005-12-12',
-    math: 9.25,
-    physics: 9.5,
-    chemistry: 9.75,
-    totalScore: 28.5
-  },
-  {
-    id: 8,
-    registrationNumber: '01001008',
-    name: 'Bùi Thị Hoa',
-    birthDate: '2005-06-08',
-    math: 8.0,
-    physics: 7.75,
-    chemistry: 8.25,
-    totalScore: 24.0
-  },
-  {
-    id: 9,
-    registrationNumber: '01001009',
-    name: 'Ngô Văn Inh',
-    birthDate: '2005-02-25',
-    math: 7.25,
-    physics: 7.5,
-    chemistry: 7.0,
-    totalScore: 21.75
-  },
-  {
-    id: 10,
-    registrationNumber: '01001010',
-    name: 'Đinh Thị Kim',
-    birthDate: '2005-08-14',
-    math: 8.25,
-    physics: 8.75,
-    chemistry: 8.0,
-    totalScore: 25.0
-  }
-])
+// Dữ liệu động từ API
+const students = ref([])
+const statistics = ref({ totalStudents: 0, averageScore: 0, highestScore: 0, passRate: 0 })
+const topStudents = ref([])
+const chartData = ref({ scoreDistribution: [], labels: [] })
+const scoreLevels = ref([])
+const subjectAnalysis = ref([])
 
-// Computed properties
-const statistics = computed(() => {
-  const totalStudents = students.length
-  const totalScore = students.reduce((sum, student) => sum + student.totalScore, 0)
-  const averageScore = (totalScore / totalStudents).toFixed(2)
-  const highestScore = Math.max(...students.map(s => s.totalScore))
-  const passRate = ((students.filter(s => s.totalScore >= 15).length / totalStudents) * 100).toFixed(1)
-  
-  return {
-    totalStudents,
-    averageScore,
-    highestScore,
-    passRate
-  }
-})
-
-const topStudents = computed(() => {
-  return [...students]
-    .sort((a, b) => b.totalScore - a.totalScore)
-    .slice(0, 10)
-})
-
-const chartData = computed(() => {
-  const ranges = [
-    { min: 0, max: 5, label: '0-5' },
-    { min: 5, max: 10, label: '5-10' },
-    { min: 10, max: 15, label: '10-15' },
-    { min: 15, max: 20, label: '15-20' },
-    { min: 20, max: 25, label: '20-25' },
-    { min: 25, max: 30, label: '25-30' }
-  ]
-  
-  const distribution = ranges.map(range => {
-    const count = students.filter(s => s.totalScore >= range.min && s.totalScore < range.max).length
-    return {
-      count,
-      height: (count / students.length) * 100
-    }
-  })
-  
-  return {
-    scoreDistribution: distribution,
-    labels: ranges.map(r => r.label)
-  }
-})
-
-const scoreLevels = computed(() => {
-  const levels = [
-    { name: 'Xuất sắc', range: '27-30 điểm', color: 'text-red-600' },
-    { name: 'Giỏi', range: '24-27 điểm', color: 'text-orange-600' },
-    { name: 'Khá', range: '21-24 điểm', color: 'text-yellow-600' },
-    { name: 'Trung bình', range: '18-21 điểm', color: 'text-green-600' },
-    { name: 'Yếu', range: '15-18 điểm', color: 'text-blue-600' },
-    { name: 'Kém', range: '0-15 điểm', color: 'text-gray-600' }
-  ]
-  
-  return levels.map(level => {
-    let count = 0
-    
-    if (level.name === 'Xuất sắc') count = students.filter(s => s.totalScore >= 27).length
-    else if (level.name === 'Giỏi') count = students.filter(s => s.totalScore >= 24 && s.totalScore < 27).length
-    else if (level.name === 'Khá') count = students.filter(s => s.totalScore >= 21 && s.totalScore < 24).length
-    else if (level.name === 'Trung bình') count = students.filter(s => s.totalScore >= 18 && s.totalScore < 21).length
-    else if (level.name === 'Yếu') count = students.filter(s => s.totalScore >= 15 && s.totalScore < 18).length
-    else count = students.filter(s => s.totalScore < 15).length
-    
-    return {
-      ...level,
-      count,
-      percentage: ((count / students.length) * 100).toFixed(1)
-    }
-  })
-})
-
-const subjectAnalysis = computed(() => {
-  const subjects = ['math', 'physics', 'chemistry']
-  const names = ['Toán', 'Vật Lý', 'Hóa Học']
-  
-  return subjects.map((subject, index) => {
-    const scores = students.map(s => s[subject])
-    return {
-      name: names[index],
-      average: (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(2),
-      min: Math.min(...scores),
-      max: Math.max(...scores)
-    }
-  })
-})
-
-// Methods
-const searchStudent = () => {
-  searchAttempted.value = true
-  const student = students.find(s => s.registrationNumber === searchQuery.value)
-  searchResult.value = student || null
+const fetchTopStudents = async () => {
+  try {
+    const response = await api.get('/api/v1/students/top_students_group_a')
+    // Chuyển đổi dữ liệu cho UI
+    topStudents.value = response.data.map(student => {
+      const math = student.scores.find(s => s.subject.code === 'TOAN')?.score || 0
+      const physics = student.scores.find(s => s.subject.code === 'VAT_LI')?.score || 0
+      const chemistry = student.scores.find(s => s.subject.code === 'HOA_HOC')?.score || 0
+      return {
+        id: student.id,
+        registrationNumber: student.registration_number,
+        name: student.name,
+        math,
+        physics,
+        chemistry,
+        totalScore: math + physics + chemistry
+      }
+    })
+  } catch (e) { console.error(e) }
 }
+
+const fetchScoreDistribution = async () => {
+  try {
+    const response = await api.get('/api/reports/score_distribution')
+    // Chuẩn hóa dữ liệu cho chart và các thống kê
+    const subjects = Object.keys(response.data)
+    // Lấy phân bố cho Toán làm ví dụ, có thể cho phép chọn môn nếu muốn
+    const toan = response.data['Toán']
+    chartData.value = {
+      scoreDistribution: [
+        { count: toan['<4'], height: toan['<4'] },
+        { count: toan['4-6'], height: toan['4-6'] },
+        { count: toan['6-8'], height: toan['6-8'] },
+        { count: toan['>=8'], height: toan['>=8'] }
+      ],
+      labels: ['<4', '4-6', '6-8', '>=8']
+    }
+    // Tính tổng số thí sinh, điểm TB, cao nhất, tỷ lệ đậu (>=15 điểm khối A)
+    let total = 0, sum = 0, max = 0, pass = 0
+    topStudents.value.forEach(s => {
+      total++
+      sum += s.totalScore
+      if (s.totalScore > max) max = s.totalScore
+      if (s.totalScore >= 15) pass++
+    })
+    statistics.value = {
+      totalStudents: total,
+      averageScore: (sum / (total || 1)).toFixed(2),
+      highestScore: max,
+      passRate: ((pass / (total || 1)) * 100).toFixed(1)
+    }
+    // Cấp độ điểm
+    scoreLevels.value = [
+      { name: '>=8', range: '>=8', color: 'text-green-600', count: toan['>=8'] },
+      { name: '6-8', range: '6-8', color: 'text-blue-600', count: toan['6-8'] },
+      { name: '4-6', range: '4-6', color: 'text-yellow-600', count: toan['4-6'] },
+      { name: '<4', range: '<4', color: 'text-red-600', count: toan['<4'] }
+    ]
+    // Phân tích môn học
+    subjectAnalysis.value = subjects.map(sub => {
+      const d = response.data[sub]
+      const avg = ((d['>=8'] * 9 + d['6-8'] * 7 + d['4-6'] * 5 + d['<4'] * 2) / (d['>=8'] + d['6-8'] + d['4-6'] + d['<4'])).toFixed(2)
+      return { name: sub, average: avg, min: 0, max: 10 }
+    })
+  } catch (e) { console.error(e) }
+}
+
+const searchStudent = async () => {
+  searchAttempted.value = true
+  try {
+    const response = await api.get(`/api/v1/students/search?registration_number=${searchQuery.value}`)
+    searchResult.value = response.data
+  } catch (e) {
+    searchResult.value = null
+  }
+}
+
+onMounted(async () => {
+  await fetchTopStudents()
+  await fetchScoreDistribution()
+})
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0]
   if (file && file.type === 'text/csv') {
-    // Simulate file processing
     uploadStatus.value = { type: 'success', message: `File "${file.name}" đã được tải lên thành công!` }
-    
-    // Reset after 3 seconds
-    setTimeout(() => {
-      uploadStatus.value = null
-    }, 3000)
+    setTimeout(() => { uploadStatus.value = null }, 3000)
   } else {
     uploadStatus.value = { type: 'error', message: 'Vui lòng chọn file CSV hợp lệ!' }
   }

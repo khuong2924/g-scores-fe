@@ -1,23 +1,18 @@
 <template>
-  <div class="search-form">
-    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
-      <h2 class="text-2xl font-bold mb-4 text-gray-800">Tra cứu điểm thi</h2>
-      <div class="flex gap-2">
+  <div class="card">
+    <div class="card-title">User Registration</div>
+    <form @submit.prevent="search">
+      <div class="form-group">
+        <label for="registrationNumber" style="font-weight:500;">Registration Number:</label>
         <input
+          id="registrationNumber"
           v-model="registrationNumber"
           type="text"
-          placeholder="Nhập số báo danh"
-          class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          @keyup.enter="search"
+          placeholder="Enter registration number"
         />
-        <button
-          @click="search"
-          class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Tìm kiếm
-        </button>
       </div>
-    </div>
+      <input type="submit" value="Submit" class="button" />
+    </form>
   </div>
 </template>
 
@@ -38,7 +33,7 @@ export default {
       }
 
       try {
-        const response = await api.get(`/api/v1/students/search?registration_number=${registrationNumber.value}`)
+        const response = await api.get(`/students/search?registration_number=${registrationNumber.value}`)
         emit('search-result', response.data)
       } catch (error) {
         if (error.response?.status === 404) {

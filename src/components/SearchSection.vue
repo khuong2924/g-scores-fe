@@ -1,43 +1,34 @@
 <template>
-  <div class="bg-white shadow rounded-lg p-6">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">Tra cứu điểm thi</h2>
-    <div class="flex">
-      <input
-        type="text"
-        v-model="searchQuery"
-        placeholder="Nhập số báo danh..."
-        class="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-      />
-      <button
-        @click="searchStudent"
-        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-      >
-        Tìm kiếm
-      </button>
+  <div>
+    <div class="card">
+      <div class="card-title">User Registration</div>
+      <form @submit.prevent="searchStudent">
+        <div class="form-group">
+          <label for="searchQuery" style="font-weight:500;">Registration Number:</label>
+          <input
+            id="searchQuery"
+            type="text"
+            v-model="searchQuery"
+            placeholder="Enter registration number"
+          />
+        </div>
+        <input type="submit" value="Submit" class="button" />
+      </form>
     </div>
-
-    <!-- Search Results -->
-    <div v-if="searchResult" class="mt-4">
-      <div class="bg-gray-50 p-4 rounded-md">
-        <h3 class="text-md font-medium">Kết quả tìm kiếm:</h3>
-        <div class="mt-2 grid grid-cols-2 gap-4">
-          <div>
-            <p><span class="font-medium">Số báo danh:</span> {{ searchResult.id }}</p>
-            <p><span class="font-medium">Họ và tên:</span> {{ searchResult.name }}</p>
-          </div>
-          <div>
-            <p><span class="font-medium">Toán:</span> {{ searchResult.math }}</p>
-            <p><span class="font-medium">Lý:</span> {{ searchResult.physics }}</p>
-            <p><span class="font-medium">Hóa:</span> {{ searchResult.chemistry }}</p>
-            <p class="font-medium">
-              Tổng điểm: {{ calculateTotal(searchResult) }}
-            </p>
-          </div>
+    <div class="card">
+      <div class="card-title">Detailed Scores</div>
+      <div v-if="searchResult">
+        <div style="font-weight:500;">Số báo danh: <span style="font-weight:400;">{{ searchResult.id }}</span></div>
+        <div style="font-weight:500;">Họ và tên: <span style="font-weight:400;">{{ searchResult.name }}</span></div>
+        <div style="margin-top:12px;">
+          <div>Toán: <b>{{ searchResult.math }}</b></div>
+          <div>Lý: <b>{{ searchResult.physics }}</b></div>
+          <div>Hóa: <b>{{ searchResult.chemistry }}</b></div>
+          <div style="margin-top:8px;">Tổng điểm: <span style="font-weight:700; color:#173ea5;">{{ calculateTotal(searchResult) }}</span></div>
         </div>
       </div>
-    </div>
-    <div v-else-if="searchAttempted" class="mt-4 text-red-500">
-      Không tìm thấy thí sinh với số báo danh này.
+      <div v-else-if="searchAttempted" class="text-red-500" style="margin-top:12px;">Không tìm thấy thí sinh với số báo danh này.</div>
+      <div v-else style="color:#888;">Detailed view of search scores here!</div>
     </div>
   </div>
 </template>
@@ -60,7 +51,6 @@ export default {
 
     const searchStudent = () => {
       if (!searchQuery.value.trim()) return;
-      
       searchAttempted.value = true;
       searchResult.value = props.students.find(student => 
         student.id.toLowerCase() === searchQuery.value.toLowerCase()

@@ -49,7 +49,7 @@ export default {
 
     const fetchTopStudents = async () => {
       try {
-        const response = await api.get('/api/v1/students/top_students_group_a')
+        const response = await api.get('/students/top_students_group_a')
         topStudents.value = response.data
       } catch (error) {
         console.error('Error fetching top students:', error)
