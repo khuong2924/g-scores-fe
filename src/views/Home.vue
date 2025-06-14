@@ -3,10 +3,7 @@
     <div class="dashboard-container">
       <h1 class="dashboard-title">Tra cứu điểm thi THPT 2024</h1>
       <div class="dashboard-stack">
-        <div class="card">
-          <div class="card-title">Nhập file dữ liệu</div>
-          <FileUpload @data-processed="onImportResult" />
-        </div>
+        
         <div class="card">
           <div class="card-title">Tra cứu điểm theo SBD</div>
           <SearchForm @search-result="handleSearchResult" />
@@ -31,7 +28,7 @@ import SearchForm from '@/components/SearchForm.vue'
 import ScoreCard from '@/components/ScoreCard.vue'
 import StatisticsChart from '@/components/StatisticsChart.vue'
 import TopStudents from '@/components/TopStudents.vue'
-import FileUpload from '@/components/FileUpload.vue'
+
 
 export default {
   name: 'HomeView',
@@ -40,7 +37,7 @@ export default {
     ScoreCard,
     StatisticsChart,
     TopStudents,
-    FileUpload
+
   },
   setup() {
     const searchResult = ref(null)

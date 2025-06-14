@@ -5,18 +5,18 @@
       <span style="color:#888;">Số báo danh:</span> <span style="font-weight:600;">{{ student.registration_number }}</span>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div v-for="score in student.scores" :key="score.id" class="score-item">
+      <div v-for="(score, subject) in student.scores" :key="subject" class="score-item">
         <div class="score-block">
-          <h3 class="score-subject">{{ score.subject.name }}</h3>
-          <p class="score-value" :class="getScoreClass(score.score)">
-            {{ score.score.toFixed(2) }}
+          <h3 class="score-subject">{{ getSubjectName(subject) }}</h3>
+          <p class="score-value" :class="getScoreClass(score)">
+            {{ score || '-' }}
           </p>
         </div>
       </div>
     </div>
-    <div v-if="groupAScore" class="score-groupA">
+    <div v-if="groupAScore !== null" class="score-groupA">
       <h3>Điểm khối A</h3>
-      <p>{{ groupAScore.toFixed(2) }}</p>
+      <p>{{ groupAScore }}</p>
     </div>
   </div>
 </template>
@@ -29,26 +29,50 @@ export default {
   props: {
     student: {
       type: Object,
-      default: null
+      required: true
     }
   },
   setup(props) {
     const groupAScore = computed(() => {
-      if (!props.student) return null
-      const math = props.student.scores.find(s => s.subject.code === 'TOAN')?.score
-      const physics = props.student.scores.find(s => s.subject.code === 'VAT_LI')?.score
-      const chemistry = props.student.scores.find(s => s.subject.code === 'HOA_HOC')?.score
-      if (!math || !physics || !chemistry) return null
-      return (math + physics + chemistry) / 3
-    })
+      if (!props.student?.scores) return null;
+      
+      const { toan, vat_li, hoa_hoc } = props.student.scores;
+      
+      // Check if any score is null or undefined
+      if (toan === null || vat_li === null || hoa_hoc === null) {
+        return null;
+      }
+      
+      const total = (parseFloat(toan) + parseFloat(vat_li) + parseFloat(hoa_hoc)) / 3;
+      return total.toFixed(2);
+    });
+
+    const getSubjectName = (code) => {
+      const subjects = {
+        'toan': 'Toán',
+        'vat_li': 'Vật Lý',
+        'hoa_hoc': 'Hóa Học',
+        'sinh_hoc': 'Sinh Học',
+        'lich_su': 'Lịch Sử',
+        'dia_li': 'Địa Lý',
+        'gdcd': 'GDCD',
+        'tieng_anh': 'Tiếng Anh'
+      };
+      return subjects[code] || code;
+    };
+
     const getScoreClass = (score) => {
-      if (score >= 8) return 'score-green'
-      if (score >= 6) return 'score-blue'
-      if (score >= 4) return 'score-yellow'
-      return 'score-red'
-    }
+      if (!score || isNaN(parseFloat(score))) return 'score-gray';
+      const numScore = parseFloat(score);
+      if (numScore >= 8) return 'score-green';
+      if (numScore >= 6) return 'score-blue';
+      if (numScore >= 4) return 'score-yellow';
+      return 'score-red';
+    };
+
     return {
       groupAScore,
+      getSubjectName,
       getScoreClass
     }
   }
@@ -95,6 +119,7 @@ export default {
 .score-blue { color: #173ea5; }
 .score-yellow { color: #eab308; }
 .score-red { color: #ef4444; }
+.score-gray { color: #9ca3af; }
 .score-groupA {
   margin-top: 28px;
   background: #eaf6fd;
