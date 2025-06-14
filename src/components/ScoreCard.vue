@@ -8,8 +8,8 @@
       <div v-for="(score, subject) in student.scores" :key="subject" class="score-item">
         <div class="score-block">
           <h3 class="score-subject">{{ getSubjectName(subject) }}</h3>
-          <p class="score-value" :class="getScoreClass(score)">
-            {{ score || '-' }}
+          <p class="score-value" :class="subject === 'ma_ngoai_ngu' ? 'score-gray' : getScoreClass(score)">
+            {{ formatScore(score) }}
           </p>
         </div>
       </div>
@@ -23,6 +23,7 @@
 
 <script>
 import { computed } from 'vue'
+import { formatScore } from '@/utils/format'
 
 export default {
   name: 'ScoreCard',
@@ -33,6 +34,9 @@ export default {
     }
   },
   setup(props) {
+    console.log('Student data:', props.student);
+    console.log('Scores:', props.student?.scores);
+
     const groupAScore = computed(() => {
       if (!props.student?.scores) return null;
       
@@ -43,8 +47,8 @@ export default {
         return null;
       }
       
-      const total = (parseFloat(toan) + parseFloat(vat_li) + parseFloat(hoa_hoc)) / 3;
-      return total.toFixed(2);
+      const total = parseFloat(toan) + parseFloat(vat_li) + parseFloat(hoa_hoc);
+      return formatScore(total);
     });
 
     const getSubjectName = (code) => {
@@ -56,7 +60,8 @@ export default {
         'lich_su': 'Lịch Sử',
         'dia_li': 'Địa Lý',
         'gdcd': 'GDCD',
-        'tieng_anh': 'Tiếng Anh'
+        'tieng_anh': 'Tiếng Anh',
+        'ma_ngoai_ngu': 'Mã ngoại ngữ'
       };
       return subjects[code] || code;
     };
@@ -73,7 +78,8 @@ export default {
     return {
       groupAScore,
       getSubjectName,
-      getScoreClass
+      getScoreClass,
+      formatScore
     }
   }
 }

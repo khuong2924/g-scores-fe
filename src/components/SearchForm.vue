@@ -213,6 +213,7 @@
 
 <script>
 import { ref, computed } from 'vue'
+import axios from 'axios'
 
 export default {
   name: 'MinimalistSearchForm',
@@ -225,36 +226,6 @@ export default {
     const errorMessage = ref('')
     const isFocused = ref(false)
     const searchResultsRef = ref(null)
-
-    // Mock API function - replace with your actual API
-    const mockApi = {
-      get: async (url) => {
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
-        
-        // Mock data for demonstration
-        if (url.includes('64007286')) {
-          return {
-            data: {
-              registration_number: '64007286',
-              name: null,
-              scores: {
-                toan: '5.8',
-                ngu_van: '8.25',
-                ngoai_ngu: '2.8',
-                ma_ngoai_ngu: 'N1',
-                vat_li: null,
-                hoa_hoc: null,
-                sinh_hoc: null,
-                lich_su: '5.0',
-                dia_li: '7.25',
-                gdcd: '8.25'
-              }
-            }
-          };
-        }
-        throw new Error('Student not found');
-      }
-    };
 
     const isValid = computed(() => {
       return registrationNumber.value.length >= 8 && /^\d+$/.test(registrationNumber.value) && !hasError.value;
@@ -294,6 +265,28 @@ export default {
       }
     };
 
+    const formatScore = (score) => {
+      if (score === null) return 'Chưa có điểm';
+      return parseFloat(score).toFixed(2);
+    };
+
+    const processResponse = (data) => {
+      // Process scores to handle null values
+      const processedScores = {};
+      for (const [key, value] of Object.entries(data.scores)) {
+        if (key === 'ma_ngoai_ngu') {
+          processedScores[key] = value; // Preserve original value for ma_ngoai_ngu
+        } else {
+          processedScores[key] = formatScore(value);
+        }
+      }
+
+      return {
+        ...data,
+        scores: processedScores
+      };
+    };
+
     const search = async () => {
       if (!registrationNumber.value.trim()) {
         hasError.value = true;
@@ -308,18 +301,39 @@ export default {
       isLoading.value = true;
 
       try {
-        const response = await mockApi.get(`/students/search?registration_number=${registrationNumber.value}`);
+        const response = await axios.get(`http://localhost:3000/api/v1/students/search`, {
+          params: {
+            registration_number: registrationNumber.value.trim()
+          }
+        });
+
         // Validate response data
         if (!response.data || !response.data.registration_number) {
           throw new Error('Invalid response format');
         }
-        emit('search-result', response.data);
+
+        // Process the response data to handle null values
+        const processedData = processResponse(response.data);
+        emit('search-result', processedData);
+        
         // Scroll to results after successful search
-        setTimeout(scrollToResults, 100); // Small delay to ensure DOM is updated
+        setTimeout(scrollToResults, 100);
       } catch (error) {
-        if (error.message === 'Student not found') {
-          showErrorModal.value = true;
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          if (error.response.status === 404) {
+            showErrorModal.value = true;
+          } else {
+            hasError.value = true;
+            errorMessage.value = 'Có lỗi xảy ra từ máy chủ, vui lòng thử lại sau';
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          hasError.value = true;
+          errorMessage.value = 'Không thể kết nối đến máy chủ, vui lòng kiểm tra kết nối mạng';
         } else {
+          // Something happened in setting up the request that triggered an Error
           hasError.value = true;
           errorMessage.value = 'Có lỗi xảy ra, vui lòng thử lại';
         }
